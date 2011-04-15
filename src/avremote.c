@@ -56,7 +56,6 @@ upnp_t *create_upnp() {
   upnp->res = (char*) calloc(1401,sizeof(char));
   upnp->meta = (char*) calloc(1024,sizeof(char));
 
-
   return(upnp);
 } 
 
@@ -75,21 +74,9 @@ void free_upnp(upnp_t *upnp) {
   free(upnp);
 }
 
-int check_upnp(upnp_t *upnp, const char *caller) {
-  int res = 1;
-  if(!upnp) {
-    fprintf(stderr,"error: upnp object is NULL (%s)",caller);
-    res = 0;
-  }
-  if(!upnp) {
-    fprintf(stderr,"error: upnp is not connected (%s)",caller);
-    res = 0;
-  }
-  return(res);
-}
-
 int connect_upnp(upnp_t *upnp, char *hostname, int port) {
   struct sockaddr_in serveraddr;
+  //  const struct sockaddr *serveraddr;
   struct hostent *host;
   int sockfd;
 
@@ -120,7 +107,7 @@ int connect_upnp(upnp_t *upnp, char *hostname, int port) {
   serveraddr.sin_port = htons(port);
   
   /* connect: create a connection with the server */
-  if (connect(sockfd, &serveraddr, sizeof(serveraddr)) < 0) {
+  if (connect(sockfd, (const struct sockaddr*)&serveraddr, sizeof(serveraddr)) < 0) {
     fprintf(stderr,"error: can't connect (%s)\n",strerror(errno));
     return(-1);
   }
@@ -133,10 +120,8 @@ int connect_upnp(upnp_t *upnp, char *hostname, int port) {
 }
 
 void render_uri_meta(upnp_t *upnp, char *path) {
-  char dir[1024];
-  char *pdir;
-  char file[1024];
-  char *pfile;
+  char dir[1024], *pdir;
+  char file[1024], *pfile;
   char url[1024];
   size_t filesize;
 
@@ -198,12 +183,5 @@ int recv_upnp(upnp_t *upnp) {
 int print_upnp(upnp_t *upnp) {
   fprintf(stderr,"header (%u bytes):\n\n%s\n\n",upnp->hdrlen, upnp->hdr);
   fprintf(stderr,"message (%u bytes):\n\n%s\n\n",upnp->msglen, upnp->msg);
-}
-
-int load(upnp_t *upnp, char *file) {
-  char meta[1024];
-  if(!check_upnp(upnp, __PRETTY_FUNCTION__)) return(0);
-  //  render_file_meta(file, meta);
-  // TODO
 }
 

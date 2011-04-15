@@ -18,6 +18,9 @@
 
 */
 
+#ifndef __AVREMOTE_H__
+#define __AVREMOTE_H__
+
 // messages get rendered in this structure
 // allocated and freed with create/free_upnp
 typedef struct {
@@ -99,14 +102,10 @@ SetVolume <DesiredVolume> (allowed DesiredVolume = 1 to 100)
 */
    
 void render_upnp(upnp_t *upnp, char *action, char *arg);
+void render_uri_meta(upnp_t *upnp, char *path);
 
 int send_upnp(upnp_t *upnp);
 int recv_upnp(upnp_t *upnp);
 int print_upnp(upnp_t *upnp);
 
-
-
-
-
-
-int check_upnp(upnp_t *upnp, const char *caller);
+#endif

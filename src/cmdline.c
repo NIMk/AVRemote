@@ -18,6 +18,8 @@
 
 */
 
+#include <config.h>
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -57,8 +59,35 @@ void cmdline(int argc, char **argv) {
     res = getopt(argc, argv, short_options);
     switch(res) {
     case 'h':
-      fprintf(stderr,"usage: %s [options] command [file]\n",argv[0]);
-      break;
+      fprintf(stderr,
+	      "%s %s - send AVTransport commands to UPNP media services\n"
+	      "\n"
+	      " Copyright (C) 2011 Jaromil @ NIMk.nl Artlab , License GNU AGPL v3+\n"
+	      " This is free software: you are free to change and redistribute it.\n"
+	      " The latest AVTransport sourcecode is published on <%s>\n"
+	      "\n"
+	      "Syntax: avremote [options] command [file]\n"
+	      "\n"
+	      "Commands:\n"
+	      "\n"
+	      " load        load a file and prepare it for playback\n"
+	      " play        start playing the selected file\n"
+	      " pause       pause currently running playback\n"
+	      " stop        stop playback and return to menu\n"
+	      "\n"
+	      "Options:\n"
+	      " -s          network address or hostname of the media server\n"
+	      " -p          port on which the UPNP AVTransport daemon is listening\n"
+	      " -t          dry run to test without a server (print out rendered xml)\n"
+	      "\n"
+	      " -h          print this help\n"
+	      " -v          version information for this tool\n"
+	      "\n"
+	      "For more informations on AVRemote read the manual: man avremote\n"
+	      "Please report bugs on <http://bugs.dyne.org>.\n",
+	      PACKAGE, VERSION, PACKAGE_URL);
+      exit(0);
+
     case 'v':
       fprintf(stderr,"AVRemote - simple commandline tool to send AVTransport commands over UPNP\n"
 	      "version 0.1 (Apr/2011) by Jaromil - Netherlands Media Art Institute\n"
@@ -180,7 +209,7 @@ int main(int argc, char **argv) {
   else {
     send_upnp(upnp);
     recv_upnp(upnp);
-    fprintf(stderr,"response:\n\n%s\n",upnp->res);
+    fprintf(stderr,"%s\n",upnp->res);
 
   }
   // TODO recv when needed
