@@ -1,24 +1,3 @@
-
-AVRemote - tool to send AVTransport commands to UPNP media services
-
- http://nimk.nl/syncstarter
-
-AVRemote aims to be a simple and portable tool to send UPNP commands
-to devices supporting the AVTransport 1 and 2 specification. It allows
-to control the playback of audio/video files on media players using
-the commandline.
-     
-AVRemote consists of code written in C. Our main goals are simplicity,
-speed, portability on embedded devices, small footprint and
-reentrancy.
-
-This software doesn't aims to be a comprehensive implementation of
-UPNP controls, please use the MiniUPNP library and tools if AVRemote
-doesn't satisfy all your needs, see <http://miniupnp.free.fr>
-
-
-AVRemote is Copyright:
-
  (c) 2011 Nederlands Instituut voor Mediakunst (NIMk)
      2011 Denis Roio <jaromil@nimk.nl>
 
@@ -34,4 +13,5 @@ AVRemote is Copyright:
      
      You should have received a copy of the GNU Affero General Public License
      along with this program.  If not, see <http://www.gnu.org/licenses/>
+
 
