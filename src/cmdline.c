@@ -85,15 +85,10 @@ void cmdline(int argc, char **argv) {
       break;
       
     case 1:
-      {
-	struct stat filestatus;
-	if( stat(optarg,&filestatus) >= 0 ) { // its a file
-	  snprintf(filename,511,"%s",optarg);
-	} else {
-	  snprintf(command,63,"%s",optarg);
-	  fprintf(stderr,"executing command '%s'\n",command);
-	}
-      }
+      if(!command[0]) {
+	snprintf(command,63,"%s",optarg);
+      } else
+	snprintf(filename,511,"%s",optarg);
       break;
     default:
       break;
@@ -122,17 +117,16 @@ void cmdline(int argc, char **argv) {
 }
 
 int main(int argc, char **argv) {
-  int sock, port, n;
+  upnp_t *upnp;
 
   cmdline(argc, argv);
 
-  upnp_t *upnp;
   upnp = create_upnp();
 
   if(!dry_run) {
 
     if ( connect_upnp(upnp, server, port) < 0 ) {
-      fprintf(stderr,"can't connect to server %s: operation aborted.\n", server);
+      fprintf(stderr,"can't connect to %s:%u: operation aborted.\n", server, port);
       exit(ERR);
     }  
 
@@ -146,6 +140,14 @@ int main(int argc, char **argv) {
   // command parsing is a cascade switch on single letters
   // this is supposedly faster than strcmp
   switch(command[0]) {
+
+  case 'l': // load url
+    //    render_upnp(upnp,"SetPlayMode", "<NewPlayMode>NORMAL</NewPlayMode>");
+    //    send_upnp(upnp);
+    render_uri_meta(upnp,filename);
+    render_upnp(upnp,"SetAVTransportURI", upnp->meta);
+    break;
+
   case 'p': 
 
     if(command[1]=='l') { // 'pl*' is play
@@ -159,12 +161,14 @@ int main(int argc, char **argv) {
     }
     break;
 
-  case 's':
+  case 's': // stop
     render_upnp(upnp,"Stop","");
     break;
+
   case 'g':
     render_upnp(upnp,"GetTransportInfo","");
     break;
+
   default:
     fprintf(stderr,"error: command not understood.\n");
     free_upnp(upnp);
@@ -173,9 +177,12 @@ int main(int argc, char **argv) {
 
   if(dry_run)
     print_upnp(upnp);
-  else
+  else {
     send_upnp(upnp);
+    recv_upnp(upnp);
+    fprintf(stderr,"response:\n\n%s\n",upnp->res);
 
+  }
   // TODO recv when needed
 
   free_upnp(upnp);

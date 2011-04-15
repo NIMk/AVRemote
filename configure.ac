@@ -32,16 +32,6 @@ AC_PROG_INSTALL
 AC_PROG_LN_S
 AC_PROG_MAKE_SET
 
-
-dnl Fortunately we have Solaris...
-AC_CHECK_HEADERS(sys/sockio.h)
-
-AC_CHECK_FUNCS(srandom random)
-if test $ac_cv_func_srandom = no; then
-  # let's try with the older srand/rand functions
-  AC_CHECK_FUNCS(srand rand)
-fi
-
 dnl Advanced network address translating functions
 AC_CHECK_FUNCS(inet_pton inet_ntop)
 
@@ -53,7 +43,7 @@ dnl Check if it is available the RFC2292 IPv4 extension and in_port_t.
 AC_CHECK_TYPES([struct in_pktinfo, in_port_t], , , [#include <sys/types.h>
 #include <netinet/in.h>])
 
-dnl AC_CHECK_HEADERS([stdio.h stdlib.h unistd.h strings.h sys/types.h sys/stat.h])
+AC_CHECK_HEADERS([stdio.h stdlib.h unistd.h strings.h sys/types.h sys/stat.h])
 
 
 dnl ==============================================================

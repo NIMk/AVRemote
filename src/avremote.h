@@ -32,6 +32,9 @@ typedef struct {
   size_t msglen;
 
   char *res;
+  size_t reslen;
+
+  char *meta;
 
 } upnp_t;
 
@@ -50,10 +53,51 @@ typedef struct {
 	   "Content-Length: %u\r\n" \
 	   "\r\n"
 
+#define UPNP_META_FORMAT "<CurrentURI>%s</CurrentURI>" \
+  "<CurrentURIMetaData><DIDL-Lite xmlns=\"urn:schemas-upnp-org:metadata-1-0/DIDL-Lite\"" \
+  "xmlns:dc=\"http://purl.org/dc/elements/1.1/\"" \
+  "xmlns:upnp=\"urn:schemas-upnp-org:metadata-1-0/upnp/\">" \
+  "<item id=\"2%s\" parentID=\"2%s\" restricted=\"0\">" \
+  "<dc:title>%s</dc:title><dc:date></dc:date>" \
+  "<upnp:class>object.item.imageItem</upnp:class><dc:creator></dc:creator>" \
+  "<upnp:genre></upnp:genre><upnp:artist></upnp:artist><upnp:album></upnp:album>" \
+  "<res protocolInfo=\"file-get:*:*:*:DLNA.ORG_OP=01;DLNA.ORG_CI=0;" \
+  "DLNA.ORG_FLAGS=00000000001000000000000000000000\" protection=\"\" tokenType=\"0\" " \
+  "bitrate=\"0\" duration=\"\" size=\"%u\" colorDepth=\"0\" ifoFileURI=\"\" " \
+  "resolution=\"\">%s</res></item></DIDL-Lite></CurrentURIMetaData>"
+
 upnp_t *create_upnp();
 void free_upnp(upnp_t *upnp);
 
 int connect_upnp(upnp_t *upnp, char *hostname, int port);
+
+/*
+Available AVTransport actions:
+
+GetCurrentTransportActions
+GetDeviceCapabilities
+GetMediaInfo
+GetPositionInfo
+GetTransportInfo
+GetTransportSettings
+Next
+Pause
+Play
+Previous
+Seek <SeekMode> <SeekTarget> (allowed SeekMode: "X_DLNA_REL_BYTE", "REL_TIME", "TRACK_NR")
+SetAVTransportURI <URI> <URIMetaData> (allowed URI: "http://server/file", "file:///folder/file"
+SetPlayMode <NewPlayMode> (allowed NewPlayMode = "NORMAL", "REPEAT_ONE", "REPEAT_ALL", "RANDOM")
+Stop
+X_DLNA_GetBytePositionInfo
+
+Available RenderingControl actions:
+
+GetMute
+GetVolume
+SetMute <DesiredMute> (allowed DesiredMute = 0 or 1)
+SetVolume <DesiredVolume> (allowed DesiredVolume = 1 to 100)
+*/
+   
 void render_upnp(upnp_t *upnp, char *action, char *arg);
 
 int send_upnp(upnp_t *upnp);

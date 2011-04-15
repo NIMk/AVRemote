@@ -34,6 +34,8 @@
 #include <sys/socket.h>
 #include <netinet/in.h>
 #include <netdb.h>
+
+#include <libgen.h>
  
 #include <errno.h>
 
@@ -47,11 +49,12 @@ upnp_t *create_upnp() {
   upnp->port = -1;
   upnp->sockfd = -1;
 
-  upnp->msg = (char*) calloc(1024,sizeof(char));
+  upnp->msg = (char*) calloc(2048,sizeof(char));
   upnp->msglen = 0;
   upnp->hdr = (char*) calloc(512,sizeof(char));
   upnp->hdrlen = 0;
   upnp->res = (char*) calloc(1401,sizeof(char));
+  upnp->meta = (char*) calloc(1024,sizeof(char));
 
 
   return(upnp);
@@ -67,6 +70,7 @@ void free_upnp(upnp_t *upnp) {
   if(upnp->msg) free(upnp->msg);
   if(upnp->hdr) free(upnp->hdr);
   if(upnp->res) free(upnp->res);
+  if(upnp->meta) free(upnp->meta);
 
   free(upnp);
 }
@@ -128,24 +132,44 @@ int connect_upnp(upnp_t *upnp, char *hostname, int port) {
   return(sockfd);
 }
 
-void render_file_meta() {
-  /*
-    "<DIDL-Lite xmlns=\"urn:schemas-upnp-org:metadata-1-0/DIDL-Lite\""
-	   "xmlns:dc=\"http://purl.org/dc/elements/1.1/\""
-	   "xmlns:upnp=\"urn:schemas-upnp-org:metadata-1-0/upnp/\">"
-	   "<item id=\"2$file\" parentID=\"2$parentDir\" restricted=\"0\">"
-	   "<dc:title>$fileName</dc:title><dc:date></dc:date><upnp:class>object.item.imageItem</upnp:class><dc:creator></dc:creator><upnp:genre></upnp:genre><upnp:artist></upnp:artist><upnp:album></upnp:album><res protocolInfo=\"file-get:*:*:*:DLNA.ORG_OP=01;DLNA.ORG_CI=0;DLNA.ORG_FLAGS=00000000001000000000000000000000\" protection=\"\" tokenType=\"0\" bitrate=\"0\" duration=\"\" size=\"$fileSize\" colorDepth=\"0\" ifoFileURI=\"\" resolution=\"\">$uri</res></item></DIDL-Lite>"
-  */
+void render_uri_meta(upnp_t *upnp, char *path) {
+  char dir[1024];
+  char *pdir;
+  char file[1024];
+  char *pfile;
+  char url[1024];
+  size_t filesize;
+
+  // TODO: streams
+
+  struct stat fs;
+  if( stat(path,&fs) < 0 ) {
+    fprintf(stderr,"error: cannot load file %s (%s)\n", path, strerror(errno));
+    filesize = 0;
+  } else
+    filesize = fs.st_size;
+
+  strncpy(dir,path,1023);
+  pdir = dirname(dir);
+  strncpy(file,path,1023);
+  pfile = basename(file);
+  snprintf(url,1023,"file://%s",path);
+  
+  
+  snprintf(upnp->meta,1023,UPNP_META_FORMAT, url,
+	   pfile, pdir, pfile, filesize, url);
+	   
+
 }
 
 void render_upnp(upnp_t *upnp, char *action, char *arg) {
   // blank message first
-  snprintf(upnp->msg,1023,UPNP_MSG_FORMAT, 
+  snprintf(upnp->msg,2047,UPNP_MSG_FORMAT, 
 	   action, arg, action);
 
   upnp->msglen = strlen(upnp->msg);
 
-  snprintf(upnp->hdr,1023,UPNP_HDR_FORMAT,
+  snprintf(upnp->hdr,511,UPNP_HDR_FORMAT,
 	   action, upnp->hostname, upnp->port, upnp->msglen);
 
   upnp->hdrlen = strlen(upnp->hdr);
@@ -168,9 +192,6 @@ int send_upnp(upnp_t *upnp) {
 int recv_upnp(upnp_t *upnp) {
   int res;
   res = read(upnp->sockfd, upnp->res,1400);
-#ifdef DEBUG
-  fprintf(stderr,"response:\n\n%s\n",upnp->res);
-#endif
   return(1);
 }
 
