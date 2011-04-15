@@ -76,6 +76,7 @@ void cmdline(int argc, char **argv) {
 	      " stop        stop playback and return to menu\n"
 	      "\n"
 	      "Options:\n"
+	      "\n"
 	      " -s          network address or hostname of the media server\n"
 	      " -p          port on which the UPNP AVTransport daemon is listening\n"
 	      " -t          dry run to test without a server (print out rendered xml)\n"
@@ -171,10 +172,9 @@ int main(int argc, char **argv) {
   switch(command[0]) {
 
   case 'l': // load url
-    //    render_upnp(upnp,"SetPlayMode", "<NewPlayMode>NORMAL</NewPlayMode>");
-    //    send_upnp(upnp);
     render_uri_meta(upnp,filename);
     render_upnp(upnp,"SetAVTransportURI", upnp->meta);
+    send_upnp(upnp);
     break;
 
   case 'p': 

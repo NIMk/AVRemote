@@ -10,17 +10,16 @@ the commandline.
      
 AVRemote consists of code written in C. Our main goals are simplicity,
 speed, portability on embedded devices, small footprint and
-reentrancy.
+reentrancy. We are testing it on the WD HD Live media players.
 
 This software doesn't aims to be a comprehensive implementation of
 UPNP controls, please use the MiniUPNP library and tools if AVRemote
 doesn't satisfy all your needs, see <http://miniupnp.free.fr>
 
-
 AVRemote is Copyright:
 
- (c) 2011 Nederlands Instituut voor Mediakunst (NIMk)
-     2011 Denis Roio <jaromil@nimk.nl>
+ (c) 2011 Denis Roio <jaromil@nimk.nl>
+     2011 Nederlands Instituut voor Mediakunst (NIMk)
 
      This program is free software: you can redistribute it and/or modify
      it under the terms of the GNU Affero General Public License as
