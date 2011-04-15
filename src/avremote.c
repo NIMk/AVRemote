@@ -65,6 +65,7 @@ char filename[512];
 char command[64];
 char server[512];
 int port = 0;
+int dry_run = 0;
 
 // messages get rendered in this structure
 // allocated and freed with create/free_upnp
@@ -73,11 +74,14 @@ typedef struct {
   int port;
   int sockfd;
 
-  char *msg;
   char *hdr;
+  size_t hdrlen;
+
+  char *msg;
+  size_t msglen;
+
   char *res;
 
-  size_t size;
 } upnp_t;
 
 
@@ -91,10 +95,11 @@ upnp_t *create_upnp() {
   upnp->sockfd = -1;
 
   upnp->msg = (char*) calloc(1024,sizeof(char));
+  upnp->msglen = 0;
   upnp->hdr = (char*) calloc(512,sizeof(char));
+  upnp->hdrlen = 0;
   upnp->res = (char*) calloc(1401,sizeof(char));
 
-  upnp->size = -1;
 
   return(upnp);
 } 
@@ -139,14 +144,14 @@ int connect_upnp(upnp_t *upnp, char *hostname, int port) {
   /* socket: create the socket */
   sockfd = socket(AF_INET, SOCK_STREAM, 0);
   if (sockfd < 0) {
-    error("error: can't open socket (%s)\n", strerror(errno));
+    fprintf(stderr,"error: can't open socket (%s)\n", strerror(errno));
     return(-1);
   }
 
   /* gethostbyname: get the server's DNS entry */
   host = gethostbyname(hostname);
   if (host == NULL) {
-    error("error: no such host as %s (%s)\n", hostname, strerror(errno));
+    fprintf(stderr,"error: no such host as %s (%s)\n", hostname, strerror(errno));
     return(-1);
   }
   
@@ -159,7 +164,7 @@ int connect_upnp(upnp_t *upnp, char *hostname, int port) {
   
   /* connect: create a connection with the server */
   if (connect(sockfd, &serveraddr, sizeof(serveraddr)) < 0) {
-    error("error: can't connect (%s)\n",strerror(errno));
+    fprintf(stderr,"error: can't connect (%s)\n",strerror(errno));
     return(-1);
   }
 
@@ -185,28 +190,27 @@ void render_upnp(upnp_t *upnp, char *action, char *arg) {
   snprintf(upnp->msg,1023,UPNP_MSG_FORMAT, 
 	   action, arg, action);
 
-  upnp->size = strlen(upnp->msg);
+  upnp->msglen = strlen(upnp->msg);
 
   snprintf(upnp->hdr,1023,UPNP_HDR_FORMAT,
-	   action, upnp->hostname, upnp->port, upnp->size);
+	   action,
+	   (dry_run?"dry run":upnp->hostname),
+	   (dry_run?0:upnp->port),
+	   upnp->msglen);
+
+  upnp->hdrlen = strlen(upnp->hdr);
+
 }
 
 int send_upnp(upnp_t *upnp) {
   int res;
-  int hdrlen = strlen(upnp->hdr);
-  res = write(upnp->sockfd,upnp->hdr,hdrlen);
-  if(res != hdrlen)
-    fprintf(stderr,"send upnp header wrote only %u of %u bytes",res, hdrlen);
+  res = write(upnp->sockfd,upnp->hdr,upnp->hdrlen);
+  if(res != upnp->hdrlen)
+    fprintf(stderr,"send upnp header wrote only %u of %u bytes",res, upnp->hdrlen);
   // TODO: check success
-  res = write(upnp->sockfd,upnp->msg,upnp->size);
-  if(res != upnp->size)
-    fprintf(stderr,"send upnp message wrote only %u of %u bytes",res, upnp->size);
-
-#ifdef DEBUG
-  fprintf(stderr,"sent %u bytes header, %u bytes message\n",hdrlen, res);
-  fprintf(stderr,"header:\n\n%s\n\n",upnp->hdr);
-  fprintf(stderr,"message:\n\n%s\n\n",upnp->msg);
-#endif
+  res = write(upnp->sockfd,upnp->msg,upnp->msglen);
+  if(res != upnp->msglen)
+    fprintf(stderr,"send upnp message wrote only %u of %u bytes",res, upnp->msglen);
 
   return(1);
 }
@@ -220,6 +224,11 @@ int recv_upnp(upnp_t *upnp) {
   return(1);
 }
 
+int print_upnp(upnp_t *upnp) {
+  fprintf(stderr,"header (%u bytes):\n\n%s\n\n",upnp->hdrlen, upnp->hdr);
+  fprintf(stderr,"message (%u bytes):\n\n%s\n\n",upnp->msglen, upnp->msg);
+}
+
 int load(upnp_t *upnp, char *file) {
   char meta[1024];
   if(!check_upnp(upnp, __PRETTY_FUNCTION__)) return(0);
@@ -230,28 +239,38 @@ int load(upnp_t *upnp, char *file) {
 int play(upnp_t *upnp) {
   if(!check_upnp(upnp, __PRETTY_FUNCTION__)) return(0);
   render_upnp(upnp,"Play","<Speed>1</Speed>");
-  send_upnp(upnp);
+  if(dry_run)
+    print_upnp(upnp);
+  else
+    send_upnp(upnp);
   return(1);
 }
 
 int stop(upnp_t *upnp) {
   if(!check_upnp(upnp, __PRETTY_FUNCTION__)) return(0);
   render_upnp(upnp,"Stop","");
-  send_upnp(upnp);
+  if(dry_run)
+    print_upnp(upnp);
+  else
+    send_upnp(upnp);
   return(1);
 }
 
 int get_trans_info(upnp_t *upnp) {
   if(!check_upnp(upnp, __PRETTY_FUNCTION__)) return(0);
   render_upnp(upnp,"GetTransportInfo","");
-  send_upnp(upnp);
-  recv_upnp(upnp);
+  if(dry_run)
+    print_upnp(upnp);
+  else {
+    send_upnp(upnp);
+    recv_upnp(upnp);
+  }
   return(1);
 }
 
 
 // we use only getopt, no _long
-static const char *short_options = "-hvD:s:p:";
+static const char *short_options = "-hvs:p:t";
 void cmdline(int argc, char **argv) {
   command[0] = 0;
   filename[0] = 0;
@@ -279,6 +298,12 @@ void cmdline(int argc, char **argv) {
       sscanf (optarg, "%u", &port);
       break;
 
+    case 't':
+      // test dry run
+      dry_run = 1;
+      fprintf(stderr,"dry run: printint out rendered upnp message without establishing connection\n");
+      break;
+      
     case '?':
       fprintf(stderr,"unrecognized option: %s\n",optarg);
       break;
@@ -290,6 +315,7 @@ void cmdline(int argc, char **argv) {
 	  snprintf(filename,511,"%s",optarg);
 	} else {
 	  snprintf(command,63,"%s",optarg);
+	  fprintf("executing command '%s'\n",command);
 	}
       }
       break;
@@ -299,22 +325,23 @@ void cmdline(int argc, char **argv) {
 
   } while(res != -1);
 
-  // check requires args
-  if(!command[0]) {
-    fprintf(stderr,"command not specified, see %s -h for help\n",argv[0]);
-    exit(1);
+  if(!dry_run) {
+    // check requires args
+    if(!command[0]) {
+      fprintf(stderr,"command not specified, see %s -h for help\n",argv[0]);
+      exit(1);
+    }
+    
+    if(!port) {
+      fprintf(stderr,"port not specified, use -p\n");
+      exit(1);
+    }
+    
+    if(!server[0]) {
+      fprintf(stderr,"server not specified, using localhost\n");
+      sprintf(server,"%s","localhost");
+    }
   }
-
-  if(!port) {
-    fprintf(stderr,"port not specified, use -p\n");
-    exit(1);
-  }
-
-  if(!server[0]) {
-    fprintf(stderr,"server not specified, using localhost\n");
-    sprintf(server,"%s","localhost");
-  }
-
   
 }
 
@@ -326,12 +353,16 @@ int main(int argc, char **argv) {
   upnp_t *upnp;
   upnp = create_upnp();
 
-  if ( connect_upnp(upnp, server, port) < 0 ) {
-    fprintf(stderr,"error: connection failed\n");
-    exit(ERR);
-  }  
+  if(!dry_run) {
 
-  fprintf(stderr,"socket: %u\n",upnp->sockfd);
+    if ( connect_upnp(upnp, server, port) < 0 ) {
+      fprintf(stderr,"can't connect to server %s: operation aborted.\n", server);
+      exit(ERR);
+    }  
+
+  }
+
+  //  fprintf(stderr,"socket: %u\n",upnp->sockfd);
 
   switch(command[0]) {
   case 'p': // play
