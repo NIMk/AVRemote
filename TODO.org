@@ -1,0 +1,10 @@
+#+TITLE: TODO for AVRemote
+
+
+
+* Release 1.0								:10%:
+
+** TODO [#A] HTTP streaming URLs load
+** TODO [#B] Realize how seek can work
+** TODO [#B] Use a select() call on socket
+** TODO [#C] Monitor GetTransportState for results
