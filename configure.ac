@@ -47,6 +47,29 @@ AC_CHECK_HEADERS([stdio.h stdlib.h unistd.h strings.h sys/types.h sys/stat.h])
 
 
 dnl ==============================================================
+dnl enable UPNP
+dnl ==============================================================
+AC_ARG_ENABLE(discovery,
+	AS_HELP_STRING([--enable-discovery],[compile with miniupnp to enable auto-discovery]),
+	[have_upnp=$enableval],
+	[have_upnp=no])
+AC_MSG_CHECKING([if UPNP support (miniupnp) is enabled])
+UPNP_LIBS=""
+if test x$have_upnp = xyes; then
+# this is the default behaviour for --enable-upnp with no arguments
+   AC_MSG_RESULT(yes)
+   AC_DEFINE(USE_UPNP,1,[Define if building auto-detect for UPNP devices via miniupnp])
+else
+   AC_MSG_RESULT(no)
+fi
+if test x$have_upnp = xyes; then
+   UPNP_LIBS="-lminiupnpc"
+   # TODO OSX and WIN
+fi
+AC_SUBST(UPNP_LIBS)
+
+
+dnl ==============================================================
 dnl compile with full warnings and debugging symbols
 dnl ==============================================================
 AC_ARG_ENABLE(debug,
@@ -56,6 +79,8 @@ AC_ARG_ENABLE(debug,
 
 if test x$enable_debug = xyes; then
     GLOBAL_CFLAGS="$GLOBAL_CFLAGS -Wall -g -ggdb"
+else
+    GLOBAL_CFLAGS="$GLOBAL_CFLAGS -O3"
 fi
 
 

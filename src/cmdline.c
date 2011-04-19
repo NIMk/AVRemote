@@ -33,6 +33,7 @@
 #include <errno.h>
 
 #include <avremote.h>
+#include <discover.h>
 
 // our exit codes are shell style: 1 is error, 0 is success
 #define ERR 1
@@ -45,6 +46,7 @@ char command[64];
 char server[512];
 int port = 0;
 int dry_run = 0;
+int discover = 0;
 
 // we use only getopt, no _long
 static const char *short_options = "-hvs:p:t";
@@ -74,6 +76,9 @@ void cmdline(int argc, char **argv) {
 	      " play        start playing the selected file\n"
 	      " pause       pause currently running playback\n"
 	      " stop        stop playback and return to menu\n"
+#ifdef USE_UPNP
+	      " discover    search for upnp devices on the network\n"
+#endif
 	      "\n"
 	      "Options:\n"
 	      "\n"
@@ -126,13 +131,17 @@ void cmdline(int argc, char **argv) {
 
   } while(res != -1);
 
-  if(!dry_run) {
+  if(command[0] == 'd') { // discover
+    discover = 1;
+  } else if(!dry_run) {
     // check requires args
     if(!command[0]) {
       fprintf(stderr,"command not specified, see %s -h for help\n",argv[0]);
       exit(1);
     }
     
+    
+    // not in dry run nor discovery, check for necessary options
     if(!port) {
       fprintf(stderr,"port not specified, use -p\n");
       exit(1);
@@ -143,7 +152,6 @@ void cmdline(int argc, char **argv) {
       sprintf(server,"%s","localhost");
     }
   }
-  
 }
 
 int main(int argc, char **argv) {
@@ -151,22 +159,36 @@ int main(int argc, char **argv) {
 
   cmdline(argc, argv);
 
+
+#ifdef USE_UPNP
+  if (discover)
+    {
+      fprintf(stderr,"Performing upnp autodiscovery...\n");
+      upnp_discover();
+      exit(0);
+    }
+#endif
+  
   upnp = create_upnp();
 
-  if(!dry_run) {
-
-    if ( connect_upnp(upnp, server, port) < 0 ) {
-      fprintf(stderr,"can't connect to %s:%u: operation aborted.\n", server, port);
-      exit(ERR);
-    }  
-
-  } else {
-
-    sprintf(upnp->hostname,"%s","dry run");
-    upnp->port = 0;
-
-  }
-
+  if(!dry_run)
+    {
+      
+      if ( connect_upnp (upnp, server, port) < 0 )
+	{
+	  fprintf(stderr,"can't connect to %s:%u: operation aborted.\n", server, port);
+	  exit(ERR);
+	}  
+      
+    } 
+  else
+    {
+      
+      sprintf(upnp->hostname,"%s","dry run");
+      upnp->port = 0;
+      
+    }
+  
   // command parsing is a cascade switch on single letters
   // this is supposedly faster than strcmp
   switch(command[0]) {
@@ -179,15 +201,18 @@ int main(int argc, char **argv) {
 
   case 'p': 
 
-    if(command[1]=='l') { // 'pl*' is play
-
-      render_upnp(upnp,"Play","<Speed>1</Speed>");
-      
-    } else if(command[1]=='a') { // 'pa*' is pause
-
-      render_upnp(upnp,"Pause","");
-
-    }
+    if(command[1]=='l')
+      { // 'pl*' is play
+	
+	render_upnp(upnp,"Play","<Speed>1</Speed>");
+	
+      }
+    else if (command[1]=='a')
+      { // 'pa*' is pause
+	
+	render_upnp(upnp,"Pause","");
+	
+      }
     break;
 
   case 's': // stop
@@ -204,16 +229,15 @@ int main(int argc, char **argv) {
     exit(1);
   }
 
-  if(dry_run)
+  if (dry_run)
     print_upnp(upnp);
-  else {
-    send_upnp(upnp);
-    recv_upnp(upnp);
-    fprintf(stderr,"%s\n",upnp->res);
-
-  }
-  // TODO recv when needed
-
+  else
+    {
+      send_upnp(upnp);
+      recv_upnp(upnp);
+      fprintf(stderr,"%s\n",upnp->res);
+    }
+  
   free_upnp(upnp);
 
   exit(0);
