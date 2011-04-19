@@ -27,7 +27,6 @@
 #include <sys/stat.h>
 #include <sys/types.h>
 #include <sys/socket.h>
-#include <netinet/in.h>
 #include <netdb.h>
 
 #include <errno.h>
@@ -155,6 +154,12 @@ void cmdline(int argc, char **argv) {
   }
 }
 
+// function pointers to various parsers
+typedef void (parser_f)(char *res);
+static parser_f *parser = NULL;
+// parsers implemented
+void gettransportinfo(char *res);
+
 int main(int argc, char **argv) {
   upnp_t *upnp;
 
@@ -222,6 +227,7 @@ int main(int argc, char **argv) {
 
   case 'g':
     render_upnp(upnp,"GetTransportInfo","");
+    parser = gettransportinfo;
     break;
 
   default:
@@ -235,11 +241,57 @@ int main(int argc, char **argv) {
   else
     {
       send_upnp(upnp);
-      recv_upnp(upnp);
-      fprintf(stderr,"%s\n",upnp->res);
+      recv_upnp(upnp, 1000);
+      if (parser)
+	(*parser)(upnp->res);
+      else
+	fprintf(stderr,"%s\n",upnp->res);
     }
   
   free_upnp(upnp);
 
   exit(0);
 }
+
+void gettransportinfo(char *res) {
+  char *p, *pp;
+  char state[64];
+  char status[64];
+  char speed[32];
+
+  // as you can see, i had a lot of fun with pointers when i was a kid
+
+  p = strstr(res, "CurrentTransportState");
+  if (!p) {
+    fprintf(stderr, "error parsing response:\n%s\n",res);
+    return;
+  }
+  pp = p; do pp+=1; while (*pp != '>'); pp++;
+  p = pp; do p+=1; while (*p != '<'); *p = 0;
+  snprintf(state,63,"%s",pp);
+
+  p++;
+
+  p = strstr(p, "CurrentTransportStatus");
+  if (!p) {
+    fprintf(stderr, "error parsing response:\n%s\n",res);
+    return;
+  }
+  pp = p; do pp+=2; while (*pp != '>'); pp++;
+  p = pp; do p+=1; while (*p != '<'); *p = 0;
+  snprintf(status,63,"%s",pp);
+
+  p++;
+
+  p = strstr(p, "CurrentSpeed");
+  if (!p) {
+    fprintf(stderr, "error parsing response:\n%s\n",res);
+    return;
+  }
+  pp = p; do pp+=2; while (*pp != '>'); pp++;
+  p = pp; do p+=1; while (*p != '<'); *p = 0;
+  snprintf(speed,31,"%s",pp);
+
+  fprintf(stderr,"%s\t%s\t%s\n", state, status, speed);
+}
+  

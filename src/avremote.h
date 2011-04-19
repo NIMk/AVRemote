@@ -105,7 +105,7 @@ void render_upnp(upnp_t *upnp, char *action, char *arg);
 void render_uri_meta(upnp_t *upnp, char *path);
 
 int send_upnp(upnp_t *upnp);
-int recv_upnp(upnp_t *upnp);
+int recv_upnp(upnp_t *upnp, int timeout);
 int print_upnp(upnp_t *upnp);
 
 #endif
