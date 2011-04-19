@@ -33,6 +33,7 @@
 
 #include <avremote.h>
 #include <discover.h>
+#include <parsers.h>
 
 // our exit codes are shell style: 1 is error, 0 is success
 #define ERR 1
@@ -46,6 +47,8 @@ char server[512];
 int port = 0;
 int dry_run = 0;
 int discover = 0;
+
+parser_f *parser = NULL;
 
 // we use only getopt, no _long
 static const char *short_options = "-hvs:p:t";
@@ -71,13 +74,14 @@ void cmdline(int argc, char **argv) {
 	      "\n"
 	      "Commands:\n"
 	      "\n"
+#ifdef USE_UPNP
+	      " discover    search for upnp devices on the network\n"
+#endif
 	      " load        load a file and prepare it for playback\n"
 	      " play        start playing the selected file\n"
 	      " pause       pause currently running playback\n"
 	      " stop        stop playback and return to menu\n"
-#ifdef USE_UPNP
-	      " discover    search for upnp devices on the network\n"
-#endif
+	      " get         get the current status of the device\n"
 	      "\n"
 	      "Options:\n"
 	      "\n"
@@ -154,11 +158,6 @@ void cmdline(int argc, char **argv) {
   }
 }
 
-// function pointers to various parsers
-typedef void (parser_f)(char *res);
-static parser_f *parser = NULL;
-// parsers implemented
-void gettransportinfo(char *res);
 
 int main(int argc, char **argv) {
   upnp_t *upnp;
@@ -225,15 +224,18 @@ int main(int argc, char **argv) {
     render_upnp(upnp,"Stop","");
     break;
 
-  case 'g':
+  case 'g': // dump a parsable full state of the device  
     render_upnp(upnp,"GetTransportInfo","");
-    parser = gettransportinfo;
+    parser = GetTransportInfo;
+    
     break;
 
   default:
-    fprintf(stderr,"error: command not understood.\n");
-    free_upnp(upnp);
-    exit(1);
+    fprintf(stderr,"warning: command not recognized, sending anyway.\n");
+    render_upnp(upnp,command,"");
+    
+    //    free_upnp(upnp);
+    //    exit(1);
   }
 
   if (dry_run)
@@ -252,46 +254,3 @@ int main(int argc, char **argv) {
 
   exit(0);
 }
-
-void gettransportinfo(char *res) {
-  char *p, *pp;
-  char state[64];
-  char status[64];
-  char speed[32];
-
-  // as you can see, i had a lot of fun with pointers when i was a kid
-
-  p = strstr(res, "CurrentTransportState");
-  if (!p) {
-    fprintf(stderr, "error parsing response:\n%s\n",res);
-    return;
-  }
-  pp = p; do pp+=1; while (*pp != '>'); pp++;
-  p = pp; do p+=1; while (*p != '<'); *p = 0;
-  snprintf(state,63,"%s",pp);
-
-  p++;
-
-  p = strstr(p, "CurrentTransportStatus");
-  if (!p) {
-    fprintf(stderr, "error parsing response:\n%s\n",res);
-    return;
-  }
-  pp = p; do pp+=2; while (*pp != '>'); pp++;
-  p = pp; do p+=1; while (*p != '<'); *p = 0;
-  snprintf(status,63,"%s",pp);
-
-  p++;
-
-  p = strstr(p, "CurrentSpeed");
-  if (!p) {
-    fprintf(stderr, "error parsing response:\n%s\n",res);
-    return;
-  }
-  pp = p; do pp+=2; while (*pp != '>'); pp++;
-  p = pp; do p+=1; while (*p != '<'); *p = 0;
-  snprintf(speed,31,"%s",pp);
-
-  fprintf(stderr,"%s\t%s\t%s\n", state, status, speed);
-}
-  

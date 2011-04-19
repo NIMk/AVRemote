@@ -18,8 +18,14 @@
 
 */
 
-#ifdef USE_UPNP
+#ifndef __PARSERS_H__
+#define __PARSERS_H__
 
-int upnp_discover();
+// function pointers to various parsers
+typedef void (parser_f)(char *res);
+
+// parsers implemented
+void GetTransportInfo(char *res);
 
 #endif
+
