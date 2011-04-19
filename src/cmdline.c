@@ -95,10 +95,11 @@ void cmdline(int argc, char **argv) {
       exit(0);
 
     case 'v':
-      fprintf(stderr,"AVRemote - simple commandline tool to send AVTransport commands over UPNP\n"
-	      "version 0.1 (Apr/2011) by Jaromil - Netherlands Media Art Institute\n"
+      fprintf(stderr,"%s - simple commandline tool to send AVTransport commands over UPNP\n"
+	      "version %s (Apr/2011) by Jaromil - Netherlands Media Art Institute\n"
 	      "Copyright (C) 2011 NIMk Artlab, License GNU AGPL v3+\n"
-	      "This is free software: you are free to change and redistribute it\n");
+	      "This is free software: you are free to change and redistribute it\n",
+	      PACKAGE, VERSION);
       exit(0);
       
     case 's':

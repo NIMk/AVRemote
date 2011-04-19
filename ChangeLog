@@ -1,0 +1,8 @@
+
+19 April 2011 - Device detection
+	Possibility to detect UPNP root devices on the same network
+	Optional linking to miniupnpc
+
+12 April 2011 - Initial release
+	Basic functionalities: load, play, stop, pause
+	No dependencies

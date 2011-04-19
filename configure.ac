@@ -5,7 +5,7 @@ dnl ==============================================================
 dnl require autoconf 2.60 (AS_ECHO/AS_ECHO_N)
 AC_PREREQ([2.60])
 
-AC_INIT([avremote],[0.1.0],[jaromil@nimk.nl],[AVRemote])
+AC_INIT([avremote],[0.2.0],[jaromil@nimk.nl],[AVRemote])
 AC_CONFIG_MACRO_DIR([m4])
 AC_CANONICAL_HOST
 
@@ -59,14 +59,19 @@ if test x$have_upnp = xyes; then
 # this is the default behaviour for --enable-upnp with no arguments
    AC_MSG_RESULT(yes)
    AC_DEFINE(USE_UPNP,1,[Define if building auto-detect for UPNP devices via miniupnp])
-else
+   UPNP_LIBS="-lminiupnpc"
+   UPNP_CFLAGS="-Iminiupnpc"
+elif test x$have_upnp != xno; then
+# compile from indicated dir
+   AC_MSG_RESULT([yes, from $enableval])
+   AC_DEFINE(USE_UPNP,1,[Define if building auto-detect for UPNP devices via miniupnp])
+   UPNP_LIBS="$enableval/libminiupnpc.a"
+   UPNP_CFLAGS="-I$enableval"
+else   
    AC_MSG_RESULT(no)
 fi
-if test x$have_upnp = xyes; then
-   UPNP_LIBS="-lminiupnpc"
-   # TODO OSX and WIN
-fi
 AC_SUBST(UPNP_LIBS)
+AC_SUBST(UPNP_CFLAGS)
 
 
 dnl ==============================================================
@@ -85,10 +90,8 @@ fi
 
 
 # declare the flags gathered so far
-CFLAGS="$GLOBAL_CFLAGS $CFLAGS"
+CFLAGS="$GLOBAL_CFLAGS $CFLAGS $UPNP_CFLAGS"
 AC_SUBST(CFLAGS)
-CXXFLAGS="$GLOBAL_CFLAGS $CXXFLAGS"
-AC_SUBST(CXXFLAGS)
 
 AC_CONFIG_FILES([
 Makefile

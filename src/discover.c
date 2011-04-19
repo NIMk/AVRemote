@@ -6,10 +6,10 @@
 
 #ifdef USE_UPNP
 
-#include <miniupnpc/miniwget.h>
-#include <miniupnpc/miniupnpc.h>
-#include <miniupnpc/upnpcommands.h>
-#include <miniupnpc/upnperrors.h>
+#include <miniwget.h>
+#include <miniupnpc.h>
+#include <upnpcommands.h>
+#include <upnperrors.h>
 
 
 int upnp_discover()
@@ -28,11 +28,10 @@ int upnp_discover()
     
     r = UPNP_GetValidIGD(devlist, &urls, &data, lanaddr, sizeof(lanaddr));
     if (!r) {
-      fprintf(stderr,"no valid UPnP IGDs found\n");
+      fprintf(stderr,"no valid UPnP devices found\n");
 
-    } else if (r == 3) { // 3 = an UPnP device has been found (not an IGD)
+    } else if (r == 3) { // 3 = an UPnP root device has been found (not an IGD)
 
-      fprintf(stderr,"UPnP found an AVTransport device:\n",r);
       dev = devlist;
       while(dev) {
 

@@ -1,10 +1,15 @@
 #+TITLE: TODO for AVRemote
 
 
-
-* Release 1.0								:10%:
+* Release 1.0								:20%:
 
 ** TODO [#A] HTTP streaming URLs load
 ** TODO [#B] Realize how seek can work
 ** TODO [#B] Use a select() call on socket
 ** TODO [#C] Monitor GetTransportState for results
+
+** DONE [#B] Auto detection of devices and ports		  :miniupnpc:
+
+   miniupnpc works, but its mostly designed for internet gateway
+   routers and has a lot of overhead (despite the mini in the name).
+   it makes sense to rewrite just the messaging that we need.
