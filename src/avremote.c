@@ -41,20 +41,28 @@
 
 #include <avremote.h>
 
+/* Buffer Boundaries
+   the following defines set the maximum size we allow for buffers used */
+#define MAX_HOSTNAME_SIZE 256
+#define MAX_MSG_SIZE 2048
+#define MAX_HDR_SIZE 512
+#define MAX_RES_SIZE 1401
+#define MAX_META_SIZE 2048
+
 
 upnp_t *create_upnp() {
   upnp_t *upnp;
   upnp = calloc(1,sizeof(upnp_t));
-  upnp->hostname = calloc(256,sizeof(char));
+  upnp->hostname = calloc(MAX_HOSTNAME_SIZE,sizeof(char));
   upnp->port = -1;
   upnp->sockfd = -1;
 
-  upnp->msg = (char*) calloc(2048,sizeof(char));
+  upnp->msg = (char*) calloc(MAX_MSG_SIZE,sizeof(char));
   upnp->msglen = 0;
-  upnp->hdr = (char*) calloc(512,sizeof(char));
+  upnp->hdr = (char*) calloc(MAX_HDR_SIZE,sizeof(char));
   upnp->hdrlen = 0;
-  upnp->res = (char*) calloc(1401,sizeof(char));
-  upnp->meta = (char*) calloc(1024,sizeof(char));
+  upnp->res = (char*) calloc(MAX_RES_SIZE,sizeof(char));
+  upnp->meta = (char*) calloc(MAX_META_SIZE,sizeof(char));
 
   return(upnp);
 } 
@@ -141,7 +149,7 @@ void render_uri_meta(upnp_t *upnp, char *path) {
   snprintf(url,1023,"file://%s",path);
   
   
-  snprintf(upnp->meta,1023,UPNP_META_FORMAT, url,
+  snprintf(upnp->meta,MAX_META_SIZE-1,UPNP_META_FORMAT, url,
 	   pfile, pdir, pfile, filesize, url);
 	   
 
@@ -149,12 +157,12 @@ void render_uri_meta(upnp_t *upnp, char *path) {
 
 void render_upnp(upnp_t *upnp, char *action, char *arg) {
   // blank message first
-  snprintf(upnp->msg,2047,UPNP_MSG_FORMAT, 
+  snprintf(upnp->msg, MAX_MSG_SIZE-1,UPNP_MSG_FORMAT, 
 	   action, arg, action);
 
   upnp->msglen = strlen(upnp->msg);
 
-  snprintf(upnp->hdr,511,UPNP_HDR_FORMAT,
+  snprintf(upnp->hdr, MAX_HDR_SIZE-1, UPNP_HDR_FORMAT,
 	   action, upnp->hostname, upnp->port, upnp->msglen);
 
   upnp->hdrlen = strlen(upnp->hdr);
@@ -176,7 +184,7 @@ int send_upnp(upnp_t *upnp) {
 
 int recv_upnp(upnp_t *upnp) {
   int res;
-  res = read(upnp->sockfd, upnp->res,1400);
+  res = read(upnp->sockfd, upnp->res,MAX_RES_SIZE-1);
   return(1);
 }
 
