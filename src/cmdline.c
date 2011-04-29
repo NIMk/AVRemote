@@ -78,6 +78,7 @@ void cmdline(int argc, char **argv) {
 	      " discover    search for upnp devices on the network\n"
 #endif
 	      " load        load a file and prepare it for playback\n"
+	      " mode        set playback mode (NORMAL or REPEAT_ONE)\n"
 	      " play        start playing the selected file\n"
 	      " pause       pause currently running playback\n"
 	      " stop        stop playback and return to menu\n"
@@ -228,6 +229,15 @@ int main(int argc, char **argv) {
     render_upnp(upnp,"GetTransportInfo","");
     parser = GetTransportInfo;
     
+    break;
+
+  case 'm': // set the playmode:
+    // "NORMAL", "REPEAT_ONE", "REPEAT_ALL", "RANDOM"
+    {
+      char tmp[256];
+      snprintf(tmp,255,"<NewPlayMode>%s</NewPlayMode>",filename);
+      render_upnp(upnp,"SetPlayMode",tmp);
+    }
     break;
 
   default:

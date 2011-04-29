@@ -60,7 +60,7 @@ if test x$have_upnp = xyes; then
    AC_MSG_RESULT(yes)
    AC_DEFINE(USE_UPNP,1,[Define if building auto-detect for UPNP devices via miniupnp])
    UPNP_LIBS="-lminiupnpc"
-   UPNP_CFLAGS="-Iminiupnpc"
+   UPNP_CFLAGS="-I /usr/include/miniupnpc"
 elif test x$have_upnp != xno; then
 # compile from indicated dir
    AC_MSG_RESULT([yes, from $enableval])
@@ -71,7 +71,6 @@ else
    AC_MSG_RESULT(no)
 fi
 AC_SUBST(UPNP_LIBS)
-AC_SUBST(UPNP_CFLAGS)
 
 
 dnl ==============================================================
