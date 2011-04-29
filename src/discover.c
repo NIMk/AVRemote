@@ -41,10 +41,17 @@ int upnp_discover()
     struct UPNPDev *dev;
     struct UPNPUrls urls;
     struct IGDdatas data;
-    int r;
+    int r, err;
 
+    // damn programmers change API prototypes in headers without versioning
+    // we'll use this define to detect
+
+#ifdef UPNPDISCOVER_SUCCESS
+    devlist = upnpDiscover(1000, multicastif, minissdpdpath, 0, &err);
+#else
     devlist = upnpDiscover(1000, multicastif, minissdpdpath, 0);
-    
+#endif
+
     r = UPNP_GetValidIGD(devlist, &urls, &data, lanaddr, sizeof(lanaddr));
     if (!r) {
       fprintf(stderr,"no valid UPnP devices found\n");
