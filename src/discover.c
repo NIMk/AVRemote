@@ -57,7 +57,7 @@ int upnp_discover()
     } else if (r == 3) { // 3 = an UPnP root device has been found (not an IGD)
 
       dev = devlist;
-      while(dev) {
+      for( dev = devlist; dev; dev = dev->pNext) {
 
 	// parse out ip and port from url
 	char ip[256];
@@ -79,15 +79,9 @@ int upnp_discover()
 	snprintf(port,63,"%s",p);
 
 	fprintf(stderr,"%s\t%s\t%s\t%s\n", dev->st, dev->descURL, ip, port);
-	dev = dev->pNext;
+
       }
 
-      /* fprintf(stderr,
-	      " controlURL: %s\n"
-	      " ipcondescURL: %s\n"
-	      " controlURL_CIF: %s\n",
-	      urls.controlURL, urls.ipcondescURL, urls.controlURL_CIF); */
-      
       FreeUPNPUrls(&urls);
     }
     freeUPNPDevlist(devlist); devlist = 0;

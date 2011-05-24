@@ -81,6 +81,7 @@ void cmdline(int argc, char **argv) {
 	      " pause       pause currently running playback\n"
 	      " stop        stop playback and return to menu\n"
 	      " get         get the current status of the device\n"
+	      " jump        seek to a position in time (00:00:00)\n"
 	      "\n"
 	      "Options:\n"
 	      "\n"
@@ -167,7 +168,7 @@ int main(int argc, char **argv) {
   if (discover)
     {
       fprintf(stderr,"Performing upnp discovery...\n");
-      upnp_discover();
+      upnp_discover(dry_run);
       exit(0);
     }
   
@@ -198,7 +199,7 @@ int main(int argc, char **argv) {
   case 'l': // load url
     render_uri_meta(upnp,filename);
     render_upnp(upnp,"SetAVTransportURI", upnp->meta);
-    send_upnp(upnp);
+    //    send_upnp(upnp);
     break;
 
   case 'p': 
@@ -233,6 +234,15 @@ int main(int argc, char **argv) {
       char tmp[256];
       snprintf(tmp,255,"<NewPlayMode>%s</NewPlayMode>",filename);
       render_upnp(upnp,"SetPlayMode",tmp);
+    }
+    break;
+
+  case 'j': // jump aka seek
+    // <SeekMode> and <SeekTarget>
+    {
+      char tmp[512];
+      snprintf(tmp,511,"<Unit>REL_TIME</Unit><Target>%s</Target>",filename);
+      render_upnp(upnp,"Seek",tmp);
     }
     break;
 
