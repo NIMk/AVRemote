@@ -27,13 +27,13 @@
 #include <sys/stat.h>
 #include <sys/types.h>
 #include <sys/socket.h>
-#include <netinet/in.h>
 #include <netdb.h>
 
 #include <errno.h>
 
 #include <avremote.h>
 #include <discover.h>
+#include <parsers.h>
 
 // our exit codes are shell style: 1 is error, 0 is success
 #define ERR 1
@@ -47,6 +47,8 @@ char server[512];
 int port = 0;
 int dry_run = 0;
 int discover = 0;
+
+parser_f *parser = NULL;
 
 // we use only getopt, no _long
 static const char *short_options = "-hvs:p:t";
@@ -72,13 +74,13 @@ void cmdline(int argc, char **argv) {
 	      "\n"
 	      "Commands:\n"
 	      "\n"
+	      " discover    scan for upnp devices on the network\n"
 	      " load        load a file and prepare it for playback\n"
+	      " mode        set playback mode (NORMAL or REPEAT_ONE)\n"
 	      " play        start playing the selected file\n"
 	      " pause       pause currently running playback\n"
 	      " stop        stop playback and return to menu\n"
-#ifdef USE_UPNP
-	      " discover    search for upnp devices on the network\n"
-#endif
+	      " get         get the current status of the device\n"
 	      "\n"
 	      "Options:\n"
 	      "\n"
@@ -155,20 +157,19 @@ void cmdline(int argc, char **argv) {
   }
 }
 
+
 int main(int argc, char **argv) {
   upnp_t *upnp;
 
   cmdline(argc, argv);
 
 
-#ifdef USE_UPNP
   if (discover)
     {
-      fprintf(stderr,"Performing upnp autodiscovery...\n");
+      fprintf(stderr,"Performing upnp discovery...\n");
       upnp_discover();
       exit(0);
     }
-#endif
   
   upnp = create_upnp();
 
@@ -220,14 +221,27 @@ int main(int argc, char **argv) {
     render_upnp(upnp,"Stop","");
     break;
 
-  case 'g':
+  case 'g': // dump a parsable full state of the device  
     render_upnp(upnp,"GetTransportInfo","");
+    parser = GetTransportInfo;
+    
+    break;
+
+  case 'm': // set the playmode:
+    // "NORMAL", "REPEAT_ONE", "REPEAT_ALL", "RANDOM"
+    {
+      char tmp[256];
+      snprintf(tmp,255,"<NewPlayMode>%s</NewPlayMode>",filename);
+      render_upnp(upnp,"SetPlayMode",tmp);
+    }
     break;
 
   default:
-    fprintf(stderr,"error: command not understood.\n");
-    free_upnp(upnp);
-    exit(1);
+    fprintf(stderr,"warning: command not recognized, sending anyway.\n");
+    render_upnp(upnp,command,"");
+    
+    //    free_upnp(upnp);
+    //    exit(1);
   }
 
   if (dry_run)
@@ -235,8 +249,11 @@ int main(int argc, char **argv) {
   else
     {
       send_upnp(upnp);
-      recv_upnp(upnp);
-      fprintf(stderr,"%s\n",upnp->res);
+      recv_upnp(upnp, 1000);
+      if (parser)
+	(*parser)(upnp->res);
+      else
+	fprintf(stderr,"%s\n",upnp->res);
     }
   
   free_upnp(upnp);

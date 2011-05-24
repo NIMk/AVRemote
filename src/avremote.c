@@ -25,15 +25,23 @@
 
 */
 
+#define _GNU_SOURCE 1
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
 #include <sys/stat.h>
 #include <sys/types.h>
+#include <sys/time.h>
 #include <sys/socket.h>
+#include <sys/select.h>
+#include <sys/param.h>
+#include <arpa/inet.h>
 #include <netinet/in.h>
 #include <netdb.h>
+
+#include <poll.h>
 
 #include <libgen.h>
  
@@ -182,10 +190,33 @@ int send_upnp(upnp_t *upnp) {
   return(1);
 }
 
-int recv_upnp(upnp_t *upnp) {
+int recv_upnp(upnp_t *upnp, int timeout) {
   int res;
-  res = read(upnp->sockfd, upnp->res,MAX_RES_SIZE-1);
-  return(1);
+  struct pollfd fds[1]; /* for the poll */
+  fd_set socketSet;
+  struct timeval timeval;
+
+  fds[0].fd = upnp->sockfd;
+  fds[0].events = POLLRDHUP; // needs _GNU_SOURCE
+  res = poll(fds, 1, timeout);
+  if (res < 0) {
+      fprintf(stderr,"error polling reply: %s\n",strerror(errno));
+      return(0);
+  } else if (!res) return(0);
+
+  FD_ZERO(&socketSet);
+  FD_SET(upnp->sockfd, &socketSet);
+  timeval.tv_sec = timeout / 1000;
+  timeval.tv_usec = (timeout % 1000) * 1000;
+  res = select(FD_SETSIZE, &socketSet, NULL, NULL, &timeval);
+  if (res < 0) {
+      fprintf(stderr,"error on socket select: %s\n",strerror(errno));
+      return(0);
+  } else if (!res) return(0);
+  
+
+  res = recv(upnp->sockfd, upnp->res, MAX_RES_SIZE-1, 0);
+  return(res);
 }
 
 int print_upnp(upnp_t *upnp) {
