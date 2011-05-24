@@ -1,6 +1,7 @@
 src/avremote
 *~
 *.o
+*.a
 .deps
 Makefile
 autom4te.cache
