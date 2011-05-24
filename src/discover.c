@@ -23,8 +23,6 @@
 #include <stdio.h>
 #include <string.h>
 
-#ifdef USE_UPNP
-
 #include <miniwget.h>
 #include <miniupnpc.h>
 #include <upnpcommands.h>
@@ -43,14 +41,14 @@ int upnp_discover()
     struct IGDdatas data;
     int r, err;
 
-    // damn programmers change API prototypes in headers without versioning
-    // we'll use this define to detect
+    // damn programmers who change API prototypes in headers
+    // without versioning.
 
-#ifdef UPNPDISCOVER_SUCCESS
-    devlist = upnpDiscover(1000, multicastif, minissdpdpath, 0, &err);
-#else
-    devlist = upnpDiscover(1000, multicastif, minissdpdpath, 0);
-#endif
+/* #ifdef UPNPDISCOVER_SUCCESS */
+    devlist = upnpDiscover(1000, multicastif, minissdpdpath, 0, 0, &err);
+/* #else */
+/*     devlist = upnpDiscover(1000, multicastif, minissdpdpath, 0); */
+/* #endif */
 
     r = UPNP_GetValidIGD(devlist, &urls, &data, lanaddr, sizeof(lanaddr));
     if (!r) {
@@ -97,4 +95,3 @@ int upnp_discover()
     return(r);
 }
 
-#endif

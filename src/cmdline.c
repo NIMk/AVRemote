@@ -74,9 +74,7 @@ void cmdline(int argc, char **argv) {
 	      "\n"
 	      "Commands:\n"
 	      "\n"
-#ifdef USE_UPNP
-	      " discover    search for upnp devices on the network\n"
-#endif
+	      " discover    scan for upnp devices on the network\n"
 	      " load        load a file and prepare it for playback\n"
 	      " mode        set playback mode (NORMAL or REPEAT_ONE)\n"
 	      " play        start playing the selected file\n"
@@ -166,14 +164,12 @@ int main(int argc, char **argv) {
   cmdline(argc, argv);
 
 
-#ifdef USE_UPNP
   if (discover)
     {
-      fprintf(stderr,"Performing upnp autodiscovery...\n");
+      fprintf(stderr,"Performing upnp discovery...\n");
       upnp_discover();
       exit(0);
     }
-#endif
   
   upnp = create_upnp();
 

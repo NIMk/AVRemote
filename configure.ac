@@ -56,22 +56,24 @@ AC_ARG_ENABLE(discovery,
 	[have_upnp=no])
 AC_MSG_CHECKING([if compiling using external miniupnpc library])
 UPNP_LIBS="upnp/libupnpc.a"
+UPNP_CPPFLAGS="-Iupnp"
 if test x$have_upnp = xyes; then
 # this is the default behaviour for --enable-upnp with no arguments
    AC_MSG_RESULT(yes)
    AC_DEFINE(USE_UPNP,1,[Define if building auto-detect for UPNP devices via miniupnp])
    UPNP_LIBS="-lminiupnpc"
-   UPNP_CFLAGS="-I /usr/include/miniupnpc"
+   UPNP_CPPFLAGS="-I /usr/include/miniupnpc"
 elif test x$have_upnp != xno; then
 # compile from indicated dir
    AC_MSG_RESULT([yes, from $enableval])
    AC_DEFINE(USE_UPNP,1,[Define if building auto-detect for UPNP devices via miniupnp])
    UPNP_LIBS="$enableval/libminiupnpc.a"
-   UPNP_CFLAGS="-I$enableval"
+   UPNP_CPPFLAGS="-I$enableval"
 else   
    AC_MSG_RESULT(no)
 fi
 AC_SUBST(UPNP_LIBS)
+AC_SUBST(UPNP_CPPFLAGS)
 
 
 dnl ==============================================================
