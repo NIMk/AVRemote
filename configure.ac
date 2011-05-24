@@ -55,8 +55,8 @@ AC_ARG_ENABLE(discovery,
 	[have_upnp=$enableval],
 	[have_upnp=no])
 AC_MSG_CHECKING([if compiling using external miniupnpc library])
-UPNP_LIBS="upnp/libupnpc.a"
-UPNP_CPPFLAGS="-Iupnp"
+UPNP_LIBS="\$(top_builddir)/src/upnp/libupnpc.a"
+UPNP_CPPFLAGS="-I\$(top_srcdir)/src/upnp"
 if test x$have_upnp = xyes; then
 # this is the default behaviour for --enable-upnp with no arguments
    AC_MSG_RESULT(yes)
