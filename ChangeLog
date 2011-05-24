@@ -1,3 +1,6 @@
+24 May 2011 - Seek capability
+	Added 'jump' command to seek to REL_TIME
+	Included miniunpnc statically
 
 19 April 2011 - Device detection
 	Possibility to detect UPNP root devices on the same network
