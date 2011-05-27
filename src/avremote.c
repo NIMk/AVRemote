@@ -145,7 +145,7 @@ void render_uri_meta(upnp_t *upnp, char *path) {
 
   struct stat fs;
   if( stat(path,&fs) < 0 ) {
-    fprintf(stderr,"error: cannot load file %s (%s)\n", path, strerror(errno));
+    //    fprintf(stderr,"error: cannot load file %s (%s)\n", path, strerror(errno));
     filesize = 0;
   } else
     filesize = fs.st_size;
@@ -154,7 +154,10 @@ void render_uri_meta(upnp_t *upnp, char *path) {
   pdir = dirname(dir);
   strncpy(file,path,1023);
   pfile = basename(file);
-  snprintf(url,1023,"file://%s",path);
+  if( strncmp(path,"http://",7)==0 )
+    snprintf(url,1023,"%s",path);
+  else
+    snprintf(url,1023,"file://%s",path);
   
   
   snprintf(upnp->meta,MAX_META_SIZE-1,UPNP_META_FORMAT, url,
