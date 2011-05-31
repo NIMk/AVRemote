@@ -46,6 +46,7 @@ char server[512];
 int port = 0;
 int dry_run = 0;
 int discover = 0;
+int pipe_stdin = 0;
 
 parser_f *parser = NULL;
 
@@ -98,7 +99,7 @@ void cmdline(int argc, char **argv) {
 
     case 'v':
       fprintf(stderr,"%s - simple commandline tool to send AVTransport commands over UPNP\n"
-	      "version %s (Apr/2011) by Jaromil - Netherlands Media Art Institute\n"
+	      "version %s by Jaromil - Netherlands Media Art Institute\n"
 	      "Copyright (C) 2011 NIMk Artlab, License GNU AGPL v3+\n"
 	      "This is free software: you are free to change and redistribute it\n",
 	      PACKAGE, VERSION);
@@ -138,10 +139,8 @@ void cmdline(int argc, char **argv) {
     discover = 1;
   } else if(!dry_run) {
     // check requires args
-    if(!command[0]) {
-      fprintf(stderr,"command not specified, see %s -h for help\n",argv[0]);
-      exit(1);
-    }
+    if( !command[0] || command[0]=='-' && !command[1]) pipe_stdin++;
+
         
   }
 }
@@ -158,7 +157,7 @@ int main(int argc, char **argv) {
   // no server specified, force discovery
   if(!server[0] || !port) discover = 1;
 
-  if (discover)
+  if (discover && !dry_run)
     {
       fprintf(stderr,"Performing upnp discovery...\n");
       found = upnp_discover(upnp);
@@ -195,7 +194,26 @@ int main(int argc, char **argv) {
       upnp->port = 0;
       
     }
-  
+
+  // pipe raw xml commands from stdin
+  if(pipe_stdin) {
+    int res;
+    int in = 0;
+    char raw[8192];
+
+    while( !feof(stdin) )
+      {
+	in = fread(raw,1,8191,stdin);
+	res = write(upnp->sockfd,raw,in);
+	if(res != in)
+	  fprintf(stderr,"upnp pipe wrote only %u of %u bytes",res, in);
+	recv_upnp(upnp, 1000);
+	fprintf(stderr,"%s\n",upnp->res);
+      }
+    free_upnp(upnp);
+    exit(0);
+  }
+
   // command parsing is a cascade switch on single letters
   // this is supposedly faster than strcmp
   switch(command[0]) {

@@ -214,7 +214,9 @@ int recv_upnp(upnp_t *upnp, int timeout) {
 }
 
 int print_upnp(upnp_t *upnp) {
-  fprintf(stderr,"header (%u bytes):\n\n%s\n\n",upnp->hdrlen, upnp->hdr);
-  fprintf(stderr,"message (%u bytes):\n\n%s\n\n",upnp->msglen, upnp->msg);
+  fprintf(stderr,"header (%u bytes):\n",upnp->hdrlen);
+  fprintf(stdout,"%s\n\n", upnp->hdr);
+  fprintf(stderr,"message (%u bytes):\n",upnp->msglen);
+  fprintf(stdout,"%s\n\n", upnp->msg);
 }
 
