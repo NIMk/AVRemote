@@ -21,6 +21,14 @@
 #ifndef __AVREMOTE_H__
 #define __AVREMOTE_H__
 
+/* Buffer Boundaries
+   the following defines set the maximum size we allow for buffers used */
+#define MAX_HOSTNAME_SIZE 256
+#define MAX_MSG_SIZE 2048
+#define MAX_HDR_SIZE 512
+#define MAX_RES_SIZE 1401
+#define MAX_META_SIZE 2048
+
 // messages get rendered in this structure
 // allocated and freed with create/free_upnp
 typedef struct {
@@ -72,7 +80,10 @@ typedef struct {
 upnp_t *create_upnp();
 void free_upnp(upnp_t *upnp);
 
-int connect_upnp(upnp_t *upnp, char *hostname, int port);
+int upnp_discover(upnp_t *upnp);
+
+// should set upnp-> hostname and port before calling this
+int connect_upnp(upnp_t *upnp);
 
 /*
 Available AVTransport actions:

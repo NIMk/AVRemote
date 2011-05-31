@@ -32,7 +32,6 @@
 #include <errno.h>
 
 #include <avremote.h>
-#include <discover.h>
 #include <parsers.h>
 
 // our exit codes are shell style: 1 is error, 0 is success
@@ -143,41 +142,46 @@ void cmdline(int argc, char **argv) {
       fprintf(stderr,"command not specified, see %s -h for help\n",argv[0]);
       exit(1);
     }
-    
-    
-    // not in dry run nor discovery, check for necessary options
-    if(!port) {
-      fprintf(stderr,"port not specified, use -p\n");
-      exit(1);
-    }
-    
-    if(!server[0]) {
-      fprintf(stderr,"server not specified, using localhost\n");
-      sprintf(server,"%s","localhost");
-    }
+        
   }
 }
 
 
 int main(int argc, char **argv) {
   upnp_t *upnp;
+  int found;
 
   cmdline(argc, argv);
 
+  upnp = create_upnp();
+  
+  // no server specified, force discovery
+  if(!server[0] || !port) discover = 1;
 
   if (discover)
     {
       fprintf(stderr,"Performing upnp discovery...\n");
-      upnp_discover(dry_run);
-      exit(0);
+      found = upnp_discover(upnp);
+
+      // we exit in case none or more than one found and no manual
+      // server:port was specified
+	if(!server[0] || !port)
+	  {
+	    if(found != 1)
+	      exit(0);
+	  }
+	else
+	  { // commandline specified explicit addresses
+	    snprintf(upnp->hostname, MAX_HOSTNAME_SIZE-1,"%s",server);
+	    upnp->port = port;
+	  }
+
     }
   
-  upnp = create_upnp();
 
   if(!dry_run)
     {
-      
-      if ( connect_upnp (upnp, server, port) < 0 )
+      if ( connect_upnp (upnp) < 0 )
 	{
 	  fprintf(stderr,"can't connect to %s:%u: operation aborted.\n", server, port);
 	  exit(ERR);
