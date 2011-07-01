@@ -70,7 +70,7 @@ void cmdline(int argc, char **argv) {
 	      " This is free software: you are free to change and redistribute it.\n"
 	      " The latest AVTransport sourcecode is published on <%s>\n"
 	      "\n"
-	      "Syntax: avremote [options] command [file]\n"
+	      "Syntax: avremote [options] [command] [args...]\n"
 	      "\n"
 	      "Commands:\n"
 	      "\n"
@@ -82,6 +82,8 @@ void cmdline(int argc, char **argv) {
 	      " stop        stop playback and return to menu\n"
 	      " get         get the current status of the device\n"
 	      " jump        seek to a position in time (00:00:00)\n"
+	      "\n"
+	      " none means load and play URL, or use - to read xml from stdin\n"
 	      "\n"
 	      "Options:\n"
 	      "\n"
@@ -139,7 +141,7 @@ void cmdline(int argc, char **argv) {
     discover = 1;
   } else if(!dry_run) {
     // check requires args
-    if( !command[0] || command[0]=='-' && !command[1]) pipe_stdin++;
+    if( command[0]=='-' && !command[1]) pipe_stdin++;
 
         
   }
@@ -214,9 +216,24 @@ int main(int argc, char **argv) {
     exit(0);
   }
 
-  // command parsing is a cascade switch on single letters
-  // this is supposedly faster than strcmp
+  /* command parsing is a cascade switch on single letters
+     this is supposedly faster than strcmp. mapping:
+
+     D iscovery
+     L oad
+     P lay
+     PA use
+     S top
+     G et
+     M ode
+     J ump
+
+  */
   switch(command[0]) {
+
+  case 'd': // discovery
+    // was processed earlier
+    break;
 
   case 'l': // load url
     render_uri_meta(upnp,filename);
@@ -269,11 +286,21 @@ int main(int argc, char **argv) {
     break;
 
   default:
-    fprintf(stderr,"warning: command not recognized, sending anyway.\n");
-    render_upnp(upnp,command,"");
-    
-    //    free_upnp(upnp);
-    //    exit(1);
+    if(!command[0]) break;
+    fprintf(stderr,"warning: command not recognized, loading and playing as url\n");
+
+    // load
+    render_uri_meta(upnp,command);
+    render_upnp(upnp,"SetAVTransportURI", upnp->meta);
+    send_upnp(upnp);
+    recv_upnp(upnp, 1000);
+
+    // must re-connect socket between commands
+    close(upnp->sockfd);
+    upnp->sockfd = 0;
+    connect_upnp(upnp);
+
+    render_upnp(upnp,"Play","<Speed>1</Speed>");
   }
 
   if (dry_run)

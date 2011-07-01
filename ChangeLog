@@ -1,11 +1,16 @@
-24 May 2011 - Seek capability
+0.4 - 01 Jul 2011 - URLs and usability
+	Now load also works for http urls
+	If no command specified, load and play argument
+	Possibility to pipe ad-hoc XML from stdin
+
+0.3 - 24 May 2011 - Seek capability
 	Added 'jump' command to seek to REL_TIME
 	Included miniunpnc statically
 
-19 April 2011 - Device detection
+0.2 - 19 April 2011 - Device detection
 	Possibility to detect UPNP root devices on the same network
 	Optional linking to miniupnpc
 
-12 April 2011 - Initial release
+0.1 - 12 April 2011 - Initial release
 	Basic functionalities: load, play, stop, pause
 	No dependencies

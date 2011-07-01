@@ -3,9 +3,9 @@
 
 * Release 1.0								:20%:
 
-** TODO [#A] HTTP streaming URLs load
 ** TODO [#C] Use a select() call on socket
 ** TODO [#C] Monitor GetTransportState for results
+** DONE [#A] HTTP streaming URLs load
 ** DONE [#B] Realize how seek can work
 ** DONE [#B] Auto detection of devices and ports		  :miniupnpc:
 

@@ -70,6 +70,7 @@ void GetTransportInfo(char *res) {
   char status[MAX];
   char speed[MAX];
   char *p;
+
   fprintf(stderr,"#\tstate\tstatus\tspeed\n");
 
   p = extract_xml(state, res, "CurrentTransportState");
